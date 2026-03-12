@@ -1,0 +1,31 @@
+@font-face {
+  font-family: 'Sligoil MicroBold';
+  src: url('/assets/fonts/Sligoil-MicroBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'CirrusCumulus';
+  src: url('/assets/fonts/CirrusCumulus.ttf') format('truetype');
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: blue;
+  color: black;
+  font-family: 'CirrusCumulus', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Sligoil MicroBold', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+img {
+  image-rendering: pixelated;
+}
