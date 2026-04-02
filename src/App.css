@@ -1,382 +1,494 @@
 .app-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 50px;
 }
 
 .box-border {
-    position: relative;
-    /* preserve actual sizing but use transparent border, overlay actual border with ::after */
-    border: 1px solid transparent !important;
+  position: relative;
+  border: 1px solid transparent !important;
 }
 
 .box-border::after {
-    content: "";
-    position: absolute;
-    top: -1px;
-    left: -1px;
-    right: -1px;
-    bottom: -1px;
-    border: 1px solid black;
-    z-index: 10;
-    pointer-events: none;
+  content: "";
+  position: absolute;
+  top: -1px; left: -1px; right: -1px; bottom: -1px;
+  border: 1px solid black;
+  z-index: 10;
+  pointer-events: none;
 }
 
 .top-layer {
-    position: relative;
-    z-index: 6;
+  position: relative;
+  z-index: 6;
+}
+
+.header-section > *:not(.section-bg),
+.player-section > *:not(.section-bg),
+.buy-section > *:not(.section-bg),
+.footer-section > *:not(.section-bg) {
+  position: relative;
+  z-index: 2;
+}
+
+.section-bg {
+  z-index: 0 !important;
 }
 
 .cyan-bg {
-    background-color: #00ffff;
+  background-color: #00ffff;
 }
 
+/* Test colors */
+.test-bg-player { background-color: #add8e6; } /* light blue */
+.test-bg-buy { background-color: #f08080; } /* light coral */
+.test-bg-buybox { background-color: #98fb98; } /* palegreen */
+.marquee-container { background-color: #ffb6c1; } /* light pink */
+
 .main-content {
-    width: 900px;
-    background-color: white;
-    position: relative;
+  width: 900px;
+  background-color: transparent;
+  position: relative;
 }
 
 /* Header */
 .header-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 20px;
 }
 
 .title-area h1 {
-    font-size: 48px;
-    line-height: 1;
-    text-transform: uppercase;
-    margin-bottom: 5px;
-    font-family: 'Sligoil MicroBold', sans-serif;
+  font-size: 32px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  font-family: 'Pixelify Sans', sans-serif;
 }
 
 .title-area .subtitle {
-    margin: 0;
-    font-size: 20px;
+  margin: 0;
+  font-size: 20px;
 }
 
 .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+  display: flex;
+  align-items: center;
+  gap: 20px; /* changed from 15 to 20 for matching standard padding */
 }
 
 .about-link {
-    font-size: 18px;
-    cursor: pointer;
-    text-decoration: underline;
+  font-size: 20px;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 .connect-wallet {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background-color: white;
-    padding: 5px 15px;
-    font-family: inherit;
-    font-size: 16px;
-    cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: white;
+  padding: 5px 15px;
+  font-family: inherit;
+  font-size: 20px;
+  cursor: pointer;
 }
 
 .cyan-box-64 {
-    width: 64px;
-    height: 64px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Marquees */
 .marquee-container {
-    overflow: hidden;
-    background-color: #00ffff;
-    border-left: none !important;
-    border-right: none !important;
+  overflow: hidden;
 }
-
 .marquee-h {
-    width: 100%;
-    height: 16px;
-}
-
-.marquee-h::after {
-    border-left: none;
-    border-right: none;
+  width: 100%;
+  height: 16px;
 }
 
 .marquee-v {
-    width: 16px;
-    height: auto;
-    align-self: stretch;
-    border-top: none !important;
-    border-bottom: none !important;
-    /* Restore the border sides overridden by box-border */
-    border-left: 1px solid transparent !important;
-    border-right: 1px solid transparent !important;
-}
-
-.marquee-v::after {
-    border-top: none;
-    border-bottom: none;
-    border-left: 1px solid black;
-    border-right: 1px solid black;
+  width: 16px;
+  height: auto;
+  align-self: stretch;
 }
 
 .marquee-content {
-    width: 100%;
-    height: 100%;
-    image-rendering: auto;
+  width: 100%;
+  height: 100%;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
 }
-
 .marquee-content.horizontal {
-    animation: move-bg-x 10s linear infinite;
+  background-repeat: repeat-x;
+  animation: move-bg-x 10s linear infinite;
 }
-
+.marquee-content.horizontal-reverse {
+  background-repeat: repeat-x;
+  animation: move-bg-x-reverse 10s linear infinite;
+}
 .marquee-content.vertical {
-    animation: move-bg-y 10s linear infinite;
+  background-repeat: repeat-y;
+  animation: move-bg-y 10s linear infinite;
 }
 
 @keyframes move-bg-x {
-    from {
-        background-position: 0 0;
-    }
-
-    to {
-        background-position: -200px 0;
-    }
+  from { background-position: 0 0; }
+  to { background-position: -280px 0; } /* flawless looping multiple of 28 */
 }
-
+@keyframes move-bg-x-reverse {
+  from { background-position: 0 0; }
+  to { background-position: 280px 0; }
+}
 @keyframes move-bg-y {
-    from {
-        background-position: 0 0;
-    }
-
-    to {
-        background-position: 0 200px;
-    }
+  from { background-position: 0 0; }
+  to { background-position: 0 280px; } /* flawless looping multiple of 28 */
 }
 
 /* Body Layout */
 .body-layout {
-    display: flex;
-    position: relative;
-    padding: 0;
+  display: flex;
+  position: relative;
+  padding: 0;
 }
 
-/* GIF Background Element */
+/* GIF Background Element - Optimized */
+.rotor-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2048px;
+  height: 2048px;
+  transform: translate3d(-50%, -50%, 0);
+  will-change: transform;
+  z-index: -1; 
+  pointer-events: none;
+}
+
 .graphic-center-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 1024px;
-    height: 1024px;
-    transform: translate(-50%, -50%);
-    background-image: url('/assets/img/gifs/graphicCenter1.gif');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    z-index: 5;
-    pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1024px;
+  height: 1024px;
+  transform: translate3d(-50%, -50%, 0);
+  will-change: transform;
+  z-index: 1; 
+  pointer-events: none;
+  object-fit: cover;
 }
 
-/* Player Section */
+.player-wrapper {
+  display: flex;
+  justify-content: flex-start;
+  flex-shrink: 0;
+}
+
 .player-section {
-    flex-grow: 1;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+  height: 340px;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.player-box-overlay {
+  position: absolute !important;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: row;
+  z-index: 0 !important;
+  pointer-events: none;
+}
+
+.player-edge {
+  width: 195px;
+  height: 100%;
+  flex-shrink: 0;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+}
+
+.player-edge.right {
+  transform: scaleX(-1);
+}
+
+.player-edge-center {
+  flex-grow: 1;
+  background-image: url('/assets/img/misc/player1_s2.png');
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+}
+
+.player-inner-content {
+  position: absolute !important;
+  top: 0; left: 0; right: 0; bottom: 0;
+  padding: 20px;
+  z-index: 2 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
 }
 
 .player-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px; /* padding between all elements is 20px */
+  height: 32px;
+}
+
+.buttons-group {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    gap: 10px; /* except buttons which have 10px */
+    width: 158px; /* 4*32 + 3*10 = 158 */
 }
 
 .control-btn {
-    width: 32px;
-    height: 32px;
-    background-color: white;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
+  width: 32px;
+  height: 32px;
+  background-color: transparent;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  border: none;
 }
 
 .control-btn img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
 }
 
 .soundwave-container {
-    flex-grow: 1;
-    height: 32px;
-    background-color: white;
-    margin-left: 10px;
+  flex-grow: 1; 
+  height: 32px;
+  background-color: white;
 }
 
 .soundwave-canvas {
-    width: 100%;
-    height: 100%;
-    display: block;
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated; /* ensures our raw pixels stay sharp */
 }
 
 /* Display */
 .player-display {
-    display: flex;
-    gap: 20px;
+  display: flex;
+  gap: 20px;
+  height: 248px; /* 300 (inner height) - 32 (controls) - 20 (gap) = 248 */
 }
 
 .playlist {
-    flex-grow: 1;
-    height: 128px;
-    background-color: white;
-    overflow-y: auto;
-    overflow-x: hidden;
-    position: relative;
-    z-index: 6;
+  flex-grow: 1;  
+  height: 100%; 
+  background-color: white;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  z-index: 6;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
 }
 
-/* Custom Webkit Scrollbar for Playlist */
+/* Custom Webkit Scrollbar removal for Playlist */
 .playlist::-webkit-scrollbar {
-    width: 12px;
-}
-
-.playlist::-webkit-scrollbar-track {
-    background: white;
-    border-left: 1px solid black;
-}
-
-.playlist::-webkit-scrollbar-thumb {
-    background: black;
-}
-
-/* Minimalistic Arrows */
-.playlist::-webkit-scrollbar-button:single-button {
-    background-color: white;
-    display: block;
-    height: 12px;
-    width: 12px;
-    background-size: 8px;
-    background-repeat: no-repeat;
-    background-position: center;
-    border-left: 1px solid black;
-}
-
-.playlist::-webkit-scrollbar-button:single-button:vertical:decrement {
-    /* Up arrow using data URI for pixel perfect arrow */
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><path d='M5 2 L9 8 L1 8 Z' fill='black'/></svg>");
-    border-bottom: 1px solid black;
-}
-
-.playlist::-webkit-scrollbar-button:single-button:vertical:increment {
-    /* Down arrow */
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><path d='M1 2 L9 2 L5 8 Z' fill='black'/></svg>");
-    border-top: 1px solid black;
+  display: none;
+  width: 0px;
 }
 
 .playlist-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 5px 10px;
-    cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 10px;
+  cursor: pointer;
 }
 
 .playlist-item.active {
-    background-color: black;
-    color: white;
+  background-color: black;
+  color: white;
 }
 
 .album-art {
-    width: 128px;
-    height: 128px;
-    background-color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
+  width: 128px;
+  height: 128px;
+  background-color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
 }
 
 .album-art img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .no-art {
-    text-align: center;
-    font-size: 14px;
-    padding: 10px;
+  text-align: center;
+  font-size: 14px;
+  padding: 10px;
 }
 
 /* Buy Section */
 .buy-section {
-    width: 250px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+  flex-grow: 1; /* Match remaining space */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* all layout padding/gaps to 20px standard */
 }
 
+/* Removed box-border from buy-box so it's a native block */
 .buy-box {
-    background-color: white;
-    padding: 15px;
-    text-align: center;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: stretch;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+}
+
+.buy-box-edge {
+  flex-shrink: 0;
+  width: auto;
+  align-self: flex-start;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  display: block;
+}
+
+.buy-box-edge.right {
+  transform: scaleX(-1);
+}
+
+.buy-box-center {
+  flex-grow: 1;
+  background-image: url('/assets/img/buttons/buttonBuy1_s2.png');
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
 }
 
 .buy-title {
-    font-family: 'Sligoil MicroBold', sans-serif;
-    font-size: 24px;
+  font-family: 'Pixelify Sans', sans-serif;
+  font-size: 16px;
 }
 
 .buy-price {
-    font-family: 'Sligoil MicroBold', sans-serif;
-    font-size: 16px;
+  font-family: 'Pixelify Sans', sans-serif;
+  font-size: 12px;
 }
 
 /* Footer Section */
 .footer-section {
-    padding: 20px;
-    margin-top: 20px;
+  padding: 20px;
+  margin-top: 0px;
 }
 
 .footer-section h2 {
-    font-size: 24px;
-    margin-bottom: 20px;
-    font-family: 'Sligoil MicroBold', sans-serif;
+  font-size: 20px;
+  margin-bottom: 20px;
+  font-family: 'Pixelify Sans', sans-serif;
 }
 
 .footer-boxes {
-    display: flex;
-    gap: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
 .footer-preview {
-    width: 96px;
-    height: 96px;
-    background-color: #00ffff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
+  width: 96px;
+  height: 96px;
+  background-color: #00ffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
 }
 
 .footer-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Mobile Layout Base styles */
+.marquee-h-mobile {
+  display: none;
+}
+
+@media screen and (max-width: 900px) {
+  .app-container {
+      padding: 10px;
+  }
+  
+  .main-content {
+      width: 100%;
+      max-width: 100%;
+      padding: 10px;
+  }
+
+  .body-layout {
+      flex-direction: column; 
+  }
+
+  .player-wrapper {
+      width: 100%;
+  }
+
+  .player-section {
+      width: 100%;
+  }
+
+  /* Reset layout constraints for mobile flex */
+  .soundwave-container, .playlist, .buttons-group {
+      width: auto;
+      flex-grow: 1;
+  }
+
+  .marquee-v {
+      display: none; 
+  }
+
+  .marquee-h-mobile {
+      display: block; 
+  }
+
+  .buy-section {
+      width: 100%;
+  }
+
+  .header-section {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 20px;
+  }
+  
+  .header-actions {
+      flex-wrap: wrap;
+      justify-content: center;
+  }
 }
