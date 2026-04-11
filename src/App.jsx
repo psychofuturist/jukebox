@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
+import { useWallet } from './store/wallet';
 
 const songs = [
   { id: 1, title: 'Psychofuturist - Neretva Han', file: 'Psychofuturist - Neretva Han.wav', duration: '3:05', art: 'neretva han.gif' },
@@ -293,6 +294,20 @@ function App() {
   const audioRef = useRef(null);
   const currentSong = songs[currentSongIndex];
 
+  const walletAddress = useWallet((s) => s.address);
+  const walletStatus = useWallet((s) => s.status);
+  const walletConnect = useWallet((s) => s.connect);
+  const walletDisconnect = useWallet((s) => s.disconnect);
+
+  useEffect(() => {
+    useWallet.getState().hydrate();
+  }, []);
+
+  const walletLabel =
+    walletStatus === 'connecting' ? 'Connecting...' :
+    walletAddress ? `${walletAddress.slice(0, 5)}...${walletAddress.slice(-4)}` :
+    'Connect wallet';
+
   const setupAudioContext = () => {
       if (audioData || !audioRef.current) return;
       try {
@@ -369,8 +384,13 @@ function App() {
           </div>
           <div className="header-actions">
             <PixelText text="About" scale={2} color="black" className="about-link top-layer" />
-            <button className="connect-wallet box-border top-layer">
-              <PixelText text="Connect wallet" scale={2} color="black" />
+            <button
+              className="connect-wallet box-border top-layer"
+              onClick={walletAddress ? walletDisconnect : walletConnect}
+              disabled={walletStatus === 'connecting'}
+              aria-label={walletAddress ? 'Disconnect wallet' : 'Connect wallet'}
+            >
+              <PixelText text={walletLabel} scale={2} color="black" />
             </button>
           </div>
         </header>
