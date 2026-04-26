@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
 import { useWallet } from './store/wallet';
+import { GACHA_ADDRESS, submitBuyOne, submitBuyThree, submitBuyFive } from './lib/contract';
+import { getBigmapKey } from './lib/tzkt';
+import { revealFromOpHash } from './lib/reveal';
+import Reveal from './components/Reveal';
+import Admin from './pages/Admin';
+import Send from './pages/Send';
+import Collect from './pages/Collect';
+import Library from './pages/Library';
+
+const POOL_ID = 0;
+const BUY_FNS = { 1: submitBuyOne, 3: submitBuyThree, 5: submitBuyFive };
 
 const songs = [
   { id: 1, title: 'Psychofuturist - Neretva Han', file: 'Psychofuturist - Neretva Han.wav', duration: '3:05', art: 'neretva han.gif' },
@@ -285,7 +297,7 @@ function SectionBackground({ image, rotation, alignPos, bgColor }) {
   );
 }
 
-function App() {
+function JukeboxHome() {
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -326,6 +338,49 @@ function App() {
       } catch (err) {
           console.error("Audio wiring failed", err);
       }
+  };
+
+  const [pool, setPool] = useState(null);
+  const [poolErr, setPoolErr] = useState(null);
+  const [txStatus, setTxStatus] = useState(null);
+  const [sending, setSending] = useState(false);
+  const [revealOpen, setRevealOpen] = useState(false);
+  const [revealTokens, setRevealTokens] = useState([]);
+
+  const loadPool = () => {
+    setPoolErr(null);
+    return getBigmapKey(GACHA_ADDRESS, 'pools', POOL_ID)
+      .then((row) => setPool(row?.value ?? null))
+      .catch((err) => setPoolErr(err.message));
+  };
+
+  useEffect(() => { loadPool(); }, []);
+
+  const priceMutez = pool ? pool.price_per_nft : null;
+
+  const handleBuy = async (qty) => {
+    if (!pool || sending) return;
+    if (!walletAddress) { walletConnect(); return; }
+    setSending(true);
+    setTxStatus(`submitting buy_${qty === 1 ? 'one' : qty === 3 ? 'three' : 'five'}…`);
+    try {
+      const res = await BUY_FNS[qty](POOL_ID, priceMutez);
+      const hash = res?.transactionHash || res?.hash;
+      if (!hash) throw new Error('no op hash returned');
+      setTxStatus(`sent: ${hash.slice(0, 12)}… — waiting for operation…`);
+      const tokens = await revealFromOpHash(hash, (stage) =>
+        setTxStatus(`${stage} (${hash.slice(0, 8)}…)`)
+      );
+      setRevealTokens(tokens);
+      setRevealOpen(true);
+      setTxStatus(null);
+      loadPool();
+    } catch (err) {
+      console.error('[buy] failed', err);
+      setTxStatus(`error: ${err.message || String(err)}`);
+    } finally {
+      setSending(false);
+    }
   };
 
   const [playerWidth, setPlayerWidth] = useState(624);
@@ -373,8 +428,9 @@ function App() {
 
   return (
     <div className="app-container">
+      <Reveal open={revealOpen} tokens={revealTokens} onClose={() => setRevealOpen(false)} />
       <div className="main-content">
-        
+
         {/* Header Section */}
         <header className="header-section">
           <SectionBackground image="/assets/img/misc/lines1_strip.webp" rotation={-90} alignPos="left bottom" bgColor="#00ffff" />
@@ -470,30 +526,31 @@ function App() {
           {/* Buy Section */}
           <div className="buy-section test-bg-buy">
             <SectionBackground image="/assets/img/misc/lines1_strip.webp" rotation={180} alignPos="left top" bgColor="black" />
-            <div className="buy-box test-bg-buybox">
-                <img src="/assets/img/buttons/buttonBuy1_s1.png" className="buy-box-edge left" alt="" />
-                <div className="buy-box-center">
-                    <PixelText text="BUY 1 SONG" scale={2} color="black" className="top-layer" />
-                    <PixelText text="9xtz" scale={1} color="black" className="top-layer" />
+            {[1, 3, 5].map((qty) => {
+              const costXtz = priceMutez ? Number(BigInt(priceMutez) * BigInt(qty)) / 1_000_000 : null;
+              const label = `BUY ${qty} ${qty === 1 ? 'SONG' : 'SONGS'}`;
+              const price = costXtz != null ? `${costXtz}xtz` : '—';
+              return (
+                <div
+                  key={qty}
+                  className="buy-box test-bg-buybox"
+                  onClick={() => handleBuy(qty)}
+                  style={{ cursor: pool && !sending ? 'pointer' : 'not-allowed', opacity: pool && !sending ? 1 : 0.5 }}
+                >
+                  <img src="/assets/img/buttons/buttonBuy1_s1.png" className="buy-box-edge left" alt="" />
+                  <div className="buy-box-center">
+                      <PixelText text={label} scale={2} color="black" className="top-layer" />
+                      <PixelText text={price} scale={1} color="black" className="top-layer" />
+                  </div>
+                  <img src="/assets/img/buttons/buttonBuy1_s1.png" className="buy-box-edge right" alt="" />
                 </div>
-                <img src="/assets/img/buttons/buttonBuy1_s1.png" className="buy-box-edge right" alt="" />
-            </div>
-            <div className="buy-box test-bg-buybox">
-                <img src="/assets/img/buttons/buttonBuy1_s1.png" className="buy-box-edge left" alt="" />
-                <div className="buy-box-center">
-                    <PixelText text="BUY 2 SONGS" scale={2} color="black" className="top-layer" />
-                    <PixelText text="15xtz" scale={1} color="black" className="top-layer" />
-                </div>
-                <img src="/assets/img/buttons/buttonBuy1_s1.png" className="buy-box-edge right" alt="" />
-            </div>
-            <div className="buy-box test-bg-buybox">
-                <img src="/assets/img/buttons/buttonBuy1_s1.png" className="buy-box-edge left" alt="" />
-                <div className="buy-box-center">
-                    <PixelText text="BUY 3 SONGS" scale={2} color="black" className="top-layer" />
-                    <PixelText text="21xtz" scale={1} color="black" className="top-layer" />
-                </div>
-                <img src="/assets/img/buttons/buttonBuy1_s1.png" className="buy-box-edge right" alt="" />
-            </div>
+              );
+            })}
+            {(poolErr || txStatus) && (
+              <div className="top-layer" style={{ width: '100%', textAlign: 'center', marginTop: 10 }}>
+                <PixelText text={poolErr ? `pool error: ${poolErr}` : txStatus} scale={1} color="white" />
+              </div>
+            )}
           </div>
         </div>
 
@@ -530,6 +587,20 @@ function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<JukeboxHome />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/send" element={<Send />} />
+        <Route path="/collect/:poolId" element={<Collect />} />
+        <Route path="/library" element={<Library />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
