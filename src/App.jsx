@@ -5,22 +5,22 @@ import { useWallet } from './store/wallet';
 import { GACHA_ADDRESS, submitBuyOne, submitBuyThree, submitBuyFive } from './lib/contract';
 import { getBigmapKey } from './lib/tzkt';
 import { revealFromOpHash } from './lib/reveal';
+import { enrichPoolTokens } from './lib/pool';
 import Reveal from './components/Reveal';
 import Admin from './pages/Admin';
 import Send from './pages/Send';
 import Collect from './pages/Collect';
 import Library from './pages/Library';
 
-const POOL_ID = 0;
+const POOL_ID = 2;
 const BUY_FNS = { 1: submitBuyOne, 3: submitBuyThree, 5: submitBuyFive };
 
-const songs = [
-  { id: 1, title: 'Psychofuturist - Neretva Han', file: 'Psychofuturist - Neretva Han.wav', duration: '3:05', art: 'neretva han.gif' },
-  { id: 2, title: 'Psychofuturist - Salt Kiss', file: 'Psychofuturist - Salt Kiss.wav', duration: '3:24', art: 'salt kiss.gif' },
-  { id: 3, title: 'Psychofuturist - Sonder Scavenger', file: 'Psychofuturist - Sonder Scavenger.mp3', duration: '4:11', art: 'sonder scavenger.gif' }
-];
-
-const noises = ['noise1.png', 'noise2.png', 'noise3.png', 'noise4.png', 'noise5.png'];
+function formatDuration(sec) {
+  if (!sec || isNaN(sec)) return '--:--';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
 
 const FONT = {
     ' ': [0x00,0x00,0x00,0x00,0x00],
@@ -302,9 +302,15 @@ function JukeboxHome() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [audioData, setAudioData] = useState(null);
-  
+  const [poolTokens, setPoolTokens] = useState([]);
+  const [tokensLoading, setTokensLoading] = useState(false);
+  const [tokensErr, setTokensErr] = useState(null);
+  const [initialEditions, setInitialEditions] = useState({}); // mock denominator: snapshot on first load
+  const [durations, setDurations] = useState({}); // index → seconds, from <audio> loadedmetadata
+  const [audioLoading, setAudioLoading] = useState(false);
+
   const audioRef = useRef(null);
-  const currentSong = songs[currentSongIndex];
+  const currentSong = poolTokens[currentSongIndex];
 
   const walletAddress = useWallet((s) => s.address);
   const walletStatus = useWallet((s) => s.status);
@@ -347,11 +353,31 @@ function JukeboxHome() {
   const [revealOpen, setRevealOpen] = useState(false);
   const [revealTokens, setRevealTokens] = useState([]);
 
-  const loadPool = () => {
+  const loadPool = async () => {
     setPoolErr(null);
-    return getBigmapKey(GACHA_ADDRESS, 'pools', POOL_ID)
-      .then((row) => setPool(row?.value ?? null))
-      .catch((err) => setPoolErr(err.message));
+    setTokensErr(null);
+    setTokensLoading(true);
+    try {
+      const row = await getBigmapKey(GACHA_ADDRESS, 'pools', POOL_ID);
+      const value = row?.value ?? null;
+      setPool(value);
+      const enriched = await enrichPoolTokens(value);
+      setPoolTokens(enriched);
+      setCurrentSongIndex((i) => (enriched.length === 0 ? 0 : Math.min(i, enriched.length - 1)));
+      // Mock denominator until objkt API: snapshot initial editions on first sighting per (fa2,tokenId).
+      setInitialEditions((prev) => {
+        const next = { ...prev };
+        for (const t of enriched) {
+          const k = `${t.fa2_address}:${t.token_id}`;
+          if (!(k in next)) next[k] = t.editions;
+        }
+        return next;
+      });
+    } catch (err) {
+      setPoolErr(err.message);
+    } finally {
+      setTokensLoading(false);
+    }
   };
 
   useEffect(() => { loadPool(); }, []);
@@ -420,11 +446,11 @@ function JukeboxHome() {
     }
   }, [isMuted, audioData]);
 
-  const togglePlay = () => { setupAudioContext(); setIsPlaying(!isPlaying); };
+  const togglePlay = () => { if (!poolTokens.length) return; setupAudioContext(); setIsPlaying(!isPlaying); };
   const toggleMute = () => setIsMuted(!isMuted);
-  const playNext = () => { setupAudioContext(); setCurrentSongIndex((prev) => (prev + 1) % songs.length); setIsPlaying(true); };
-  const playPrev = () => { setupAudioContext(); setCurrentSongIndex((prev) => (prev === 0 ? songs.length - 1 : prev - 1)); setIsPlaying(true); };
-  const selectSong = (index) => { setupAudioContext(); setCurrentSongIndex(index); setIsPlaying(true); };
+  const playNext = () => { if (!poolTokens.length) return; setupAudioContext(); setCurrentSongIndex((prev) => (prev + 1) % poolTokens.length); setIsPlaying(true); };
+  const playPrev = () => { if (!poolTokens.length) return; setupAudioContext(); setCurrentSongIndex((prev) => (prev === 0 ? poolTokens.length - 1 : prev - 1)); setIsPlaying(true); };
+  const selectSong = (index) => { if (!poolTokens.length) return; setupAudioContext(); setCurrentSongIndex(index); setIsPlaying(true); };
 
   return (
     <div className="app-container">
@@ -456,7 +482,21 @@ function JukeboxHome() {
 
         {/* Main Body Layout */}
         <div className="body-layout">
-          <audio ref={audioRef} src={`/assets/songs/${currentSong.file}`} onEnded={playNext} />
+          <audio
+            ref={audioRef}
+            src={currentSong?.artifactUri || undefined}
+            onEnded={playNext}
+            onLoadStart={() => currentSong?.artifactUri && setAudioLoading(true)}
+            onWaiting={() => setAudioLoading(true)}
+            onCanPlay={() => setAudioLoading(false)}
+            onLoadedMetadata={(ev) => {
+              setAudioLoading(false);
+              const dur = ev.currentTarget.duration;
+              setDurations((d) => ({ ...d, [currentSongIndex]: dur }));
+            }}
+            onError={() => setAudioLoading(false)}
+            crossOrigin="anonymous"
+          />
           {/* Background Video Elements shifted to webp format per user request for precise pixelated rendering */}
           <img src="/assets/img/gifs/rotorBig1asep.webp" className="rotor-bg" alt="rotor bg" />
           <img src="/assets/img/gifs/graphicCenter1asep.webp" className="graphic-center-bg" alt="graphic center bg" />
@@ -494,25 +534,36 @@ function JukeboxHome() {
             <div className="player-display">
               {/* Removed box-border class from playlist per instruction */}
               <div className="playlist">
-                {songs.map((song, index) => {
+                {tokensLoading && !poolTokens.length && (
+                  <PixelText text="loading pool..." scale={1} color="black" className="top-layer" />
+                )}
+                {!tokensLoading && !poolTokens.length && (
+                  <PixelText text="no tokens in pool" scale={1} color="black" className="top-layer" />
+                )}
+                {poolTokens.map((song, index) => {
                   const textColor = index === currentSongIndex ? 'white' : 'black';
                   return (
-                    <div 
-                      key={song.id} 
+                    <div
+                      key={`${song.fa2_address}:${song.token_id}`}
                       className={`playlist-item ${index === currentSongIndex ? 'active' : ''}`}
                       onClick={() => selectSong(index)}
                     >
-                      <PixelText text={`${index + 1}. ${song.title}`} scale={1} color={textColor} className="top-layer" />
-                      <PixelText text={song.duration} scale={1} color={textColor} className="top-layer" />
+                      <PixelText text={`${index + 1}. ${song.name}`} scale={1} color={textColor} className="top-layer" />
+                      <PixelText text={formatDuration(durations[index])} scale={1} color={textColor} className="top-layer" />
                     </div>
                   );
                 })}
               </div>
               <div className="album-art box-border">
-                {currentSong.art ? (
-                  <img src={`/assets/img/albumArt/${currentSong.art}`} alt="Album Art" className="top-layer" />
+                {currentSong?.displayUri ? (
+                  <img src={currentSong.displayUri} alt="Album Art" className="top-layer" />
                 ) : (
                   <PixelText text="Album art for song playing" scale={1} color="black" className="no-art top-layer" />
+                )}
+                {audioLoading && (
+                  <div className="audio-loader top-layer">
+                    <div className="audio-loader-spinner" />
+                  </div>
                 )}
                 </div>
               </div>
@@ -566,19 +617,26 @@ function JukeboxHome() {
             ))}
           </div>
           <div className="footer-boxes">
-            {songs.map((song, index) => {
-                const avails = [4, 12, 7];
+            {!poolTokens.length && (
+              <PixelText text={tokensLoading ? 'loading pool...' : 'no tokens in pool'} scale={1} color="black" className="top-layer" />
+            )}
+            {poolTokens.map((song, index) => {
+                const k = `${song.fa2_address}:${song.token_id}`;
+                const initial = initialEditions[k] ?? song.editions;
+                const tzktUrl = `https://shadownet.tzkt.io/${song.fa2_address}/tokens/${song.token_id}`;
                 return (
-                  <div key={`foot-${song.id}`} className="footer-item" style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start' }}>
+                  <div key={`foot-${k}`} className="footer-item" style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start' }}>
                       <div className="footer-preview box-border" onClick={() => selectSong(index)} style={{ cursor: 'pointer' }}>
-                          <img src={`/assets/img/albumArt/${song.art}`} alt="Album Art" className="top-layer" />
+                          {song.displayUri ? (
+                            <img src={song.displayUri} alt="Album Art" className="top-layer" />
+                          ) : null}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }} className="top-layer">
-                          <PixelText text={song.title} scale={1} color="black" />
-                          <PixelText text={`Available: ${avails[index]}/15`} scale={1} color="black" />
-                          <div style={{ borderBottom: '1px solid black', display: 'flex', cursor: 'pointer', alignSelf: 'flex-start' }}>
-                              <PixelText text="view in Objkt" scale={1} color="black" />
-                          </div>
+                          <PixelText text={song.name} scale={1} color="black" />
+                          <PixelText text={`Available: ${song.editions}/${initial}`} scale={1} color="black" />
+                          <a href={tzktUrl} target="_blank" rel="noreferrer" style={{ borderBottom: '1px solid black', display: 'flex', cursor: 'pointer', alignSelf: 'flex-start', textDecoration: 'none' }}>
+                              <PixelText text="view on tzkt" scale={1} color="black" />
+                          </a>
                       </div>
                   </div>
                 );
