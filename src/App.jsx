@@ -348,10 +348,12 @@ function JukeboxHome() {
 
   const [pool, setPool] = useState(null);
   const [poolErr, setPoolErr] = useState(null);
-  const [txStatus, setTxStatus] = useState(null);
   const [sending, setSending] = useState(false);
   const [revealOpen, setRevealOpen] = useState(false);
   const [revealTokens, setRevealTokens] = useState([]);
+  const [buyStage, setBuyStage] = useState(null);
+  const [buyError, setBuyError] = useState(null);
+  const [buyQty, setBuyQty] = useState(1);
 
   const loadPool = async () => {
     setPoolErr(null);
@@ -388,22 +390,24 @@ function JukeboxHome() {
     if (!pool || sending) return;
     if (!walletAddress) { walletConnect(); return; }
     setSending(true);
-    setTxStatus(`submitting buy_${qty === 1 ? 'one' : qty === 3 ? 'three' : 'five'}…`);
+    // Open the modal immediately and drive the whole flow inside it.
+    setBuyQty(qty);
+    setBuyError(null);
+    setRevealTokens([]);
+    setBuyStage('submitting transaction…');
+    setRevealOpen(true);
     try {
       const res = await BUY_FNS[qty](POOL_ID, priceMutez);
       const hash = res?.transactionHash || res?.hash;
       if (!hash) throw new Error('no op hash returned');
-      setTxStatus(`sent: ${hash.slice(0, 12)}… — waiting for operation…`);
-      const tokens = await revealFromOpHash(hash, (stage) =>
-        setTxStatus(`${stage} (${hash.slice(0, 8)}…)`)
-      );
+      setBuyStage('confirming purchase…');
+      const tokens = await revealFromOpHash(hash, (stage) => setBuyStage(stage));
       setRevealTokens(tokens);
-      setRevealOpen(true);
-      setTxStatus(null);
+      setBuyStage(null);
       loadPool();
     } catch (err) {
       console.error('[buy] failed', err);
-      setTxStatus(`error: ${err.message || String(err)}`);
+      setBuyError(err.message || String(err));
     } finally {
       setSending(false);
     }
@@ -454,7 +458,14 @@ function JukeboxHome() {
 
   return (
     <div className="app-container">
-      <Reveal open={revealOpen} tokens={revealTokens} onClose={() => setRevealOpen(false)} />
+      <Reveal
+        open={revealOpen}
+        tokens={revealTokens}
+        stage={buyStage}
+        error={buyError}
+        qty={buyQty}
+        onClose={() => setRevealOpen(false)}
+      />
       <div className="main-content">
 
         {/* Header Section */}
@@ -597,9 +608,9 @@ function JukeboxHome() {
                 </div>
               );
             })}
-            {(poolErr || txStatus) && (
+            {poolErr && (
               <div className="top-layer" style={{ width: '100%', textAlign: 'center', marginTop: 10 }}>
-                <PixelText text={poolErr ? `pool error: ${poolErr}` : txStatus} scale={1} color="white" />
+                <PixelText text={`pool error: ${poolErr}`} scale={1} color="white" />
               </div>
             )}
           </div>

@@ -1,6 +1,6 @@
 import { dAppClient } from './tezos';
 
-export const GACHA_ADDRESS = 'KT1WsZmN6nUrRUmZQgTorbvp4KhRNin9W4o6';
+export const GACHA_ADDRESS = 'KT1ULp2ZvCiPhsccddivECEuFRL7xTNtBaoW';
 
 function callAt(destination, entrypoint, value, amountMutez = '0') {
   return dAppClient.requestOperation({

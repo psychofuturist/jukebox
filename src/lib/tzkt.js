@@ -15,11 +15,12 @@ export const getBigmapKeys = (address, name, query = '') =>
 export const getBigmapKey = (address, name, key) =>
   tzktFetch(`/contracts/${address}/bigmaps/${name}/keys/${encodeURIComponent(key)}`);
 
-export function getEvents({ contract, tag, transactionId, limit = 100 }) {
+export function getEvents({ contract, tag, transactionId, limit = 100, sortDesc = false }) {
   const params = new URLSearchParams();
   if (contract) params.set('contract', contract);
   if (tag) params.set('tag', tag);
   if (transactionId != null) params.set('transactionId', String(transactionId));
+  if (sortDesc) params.set('sort.desc', 'id');
   params.set('limit', String(limit));
   return tzktFetch(`/contracts/events?${params}`);
 }
