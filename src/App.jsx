@@ -15,6 +15,14 @@ import Library from './pages/Library';
 const POOL_ID = 2;
 const BUY_FNS = { 1: submitBuyOne, 3: submitBuyThree, 5: submitBuyFive };
 
+// hic et nunc / Teia OBJKTs live on this FA2 contract; link those to Teia,
+// everything else to objkt.com.
+const HEN_FA2 = 'KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton';
+const marketplaceLink = (fa2_address, token_id) =>
+  fa2_address === HEN_FA2
+    ? { url: `https://teia.art/objkt/${token_id}`, label: 'view on teia' }
+    : { url: `https://objkt.com/tokens/${fa2_address}/${token_id}`, label: 'view on objkt' };
+
 function formatDuration(sec) {
   if (!sec || isNaN(sec)) return '--:--';
   const m = Math.floor(sec / 60);
@@ -634,7 +642,7 @@ function JukeboxHome() {
             {poolTokens.map((song, index) => {
                 const k = `${song.fa2_address}:${song.token_id}`;
                 const initial = initialEditions[k] ?? song.editions;
-                const tzktUrl = `https://shadownet.tzkt.io/${song.fa2_address}/tokens/${song.token_id}`;
+                const market = marketplaceLink(song.fa2_address, song.token_id);
                 return (
                   <div key={`foot-${k}`} className="footer-item" style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start' }}>
                       <div className="footer-preview box-border" onClick={() => selectSong(index)} style={{ cursor: 'pointer' }}>
@@ -645,8 +653,8 @@ function JukeboxHome() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }} className="top-layer">
                           <PixelText text={song.name} scale={1} color="black" />
                           <PixelText text={`Available: ${song.editions}/${initial}`} scale={1} color="black" />
-                          <a href={tzktUrl} target="_blank" rel="noreferrer" style={{ borderBottom: '1px solid black', display: 'flex', cursor: 'pointer', alignSelf: 'flex-start', textDecoration: 'none' }}>
-                              <PixelText text="view on tzkt" scale={1} color="black" />
+                          <a href={market.url} target="_blank" rel="noreferrer" style={{ borderBottom: '1px solid black', display: 'flex', cursor: 'pointer', alignSelf: 'flex-start', textDecoration: 'none' }}>
+                              <PixelText text={market.label} scale={1} color="black" />
                           </a>
                       </div>
                   </div>
