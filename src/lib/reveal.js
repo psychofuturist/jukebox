@@ -1,7 +1,6 @@
-import { getOperation, getEvents, getTokenMetadata } from './tzkt';
+import { getOperation, getEvents, resolveTokenMetadata, IPFS_GATEWAY } from './tzkt';
 import { GACHA_ADDRESS } from './contract';
 
-const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export function ipfsToHttp(uri) {
@@ -77,9 +76,7 @@ function parseDrawnTokens(payload) {
 }
 
 async function fetchTokenInfo(fa2_address, token_id) {
-  const rows = await getTokenMetadata(fa2_address, token_id).catch(() => []);
-  const row = Array.isArray(rows) ? rows[0] : rows;
-  const md = row?.metadata || {};
+  const md = await resolveTokenMetadata(fa2_address, token_id);
   return {
     fa2_address,
     token_id,

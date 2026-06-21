@@ -1,4 +1,4 @@
-import { getTokenMetadata } from './tzkt';
+import { resolveTokenMetadata } from './tzkt';
 import { ipfsToHttp } from './reveal';
 
 export function sortPoolTokens(tokensMap) {
@@ -9,17 +9,11 @@ export function sortPoolTokens(tokensMap) {
     .map(([index, value]) => ({ index, ...value }));
 }
 
-async function fetchMetadata(fa2_address, token_id) {
-  const rows = await getTokenMetadata(fa2_address, token_id).catch(() => []);
-  const row = Array.isArray(rows) ? rows[0] : rows;
-  return row?.metadata || {};
-}
-
 export async function enrichPoolTokens(poolValue) {
   const sorted = sortPoolTokens(poolValue?.tokens);
   return Promise.all(
     sorted.map(async (t) => {
-      const md = await fetchMetadata(t.fa2_address, t.token_id);
+      const md = await resolveTokenMetadata(t.fa2_address, t.token_id);
       return {
         index: t.index,
         fa2_address: t.fa2_address,

@@ -32,3 +32,34 @@ export const getTokenBalances = (owner, extra = '') =>
 
 export const getTokenMetadata = (fa2Address, tokenId) =>
   tzktFetch(`/tokens?contract=${fa2Address}&tokenId=${tokenId}`);
+
+export const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
+
+const hexToStr = (hex) =>
+  new TextDecoder().decode(new Uint8Array(hex.match(/../g).map((h) => parseInt(h, 16))));
+
+const ipfsUrl = (uri) =>
+  uri.startsWith('ipfs://') ? IPFS_GATEWAY + uri.slice(7) : uri;
+
+// Resolve a token's TZIP-21 metadata. Prefer TzKT's resolved `metadata`, but
+// shadownet's indexer doesn't fetch off-chain (`""→ipfs://`) pointers, so when
+// it's empty we read the on-chain `token_metadata` pointer and fetch the JSON
+// ourselves. Returns a metadata object (possibly empty) — never throws.
+export async function resolveTokenMetadata(fa2Address, tokenId) {
+  const rows = await getTokenMetadata(fa2Address, tokenId).catch(() => []);
+  const row = Array.isArray(rows) ? rows[0] : rows;
+  const md = row?.metadata;
+  if (md && (md.name || md.artifactUri || md.displayUri || md.thumbnailUri)) return md;
+  try {
+    const key = await getBigmapKey(fa2Address, 'token_metadata', tokenId);
+    const hex = key?.value?.token_info?.[''];
+    if (!hex) return md || {};
+    const uri = hexToStr(hex);
+    if (!uri.startsWith('ipfs://')) return md || {};
+    const res = await fetch(ipfsUrl(uri));
+    if (!res.ok) return md || {};
+    return await res.json();
+  } catch {
+    return md || {};
+  }
+}
