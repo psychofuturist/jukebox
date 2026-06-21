@@ -33,7 +33,7 @@ export const getTokenBalances = (owner, extra = '') =>
 export const getTokenMetadata = (fa2Address, tokenId) =>
   tzktFetch(`/tokens?contract=${fa2Address}&tokenId=${tokenId}`);
 
-export const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
+export const IPFS_GATEWAY = 'https://turquoise-elaborate-squid-767.mypinata.cloud/ipfs/';
 
 const hexToStr = (hex) =>
   new TextDecoder().decode(new Uint8Array(hex.match(/../g).map((h) => parseInt(h, 16))));

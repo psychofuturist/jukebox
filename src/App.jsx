@@ -12,7 +12,7 @@ import Send from './pages/Send';
 import Collect from './pages/Collect';
 import Library from './pages/Library';
 
-const POOL_ID = 4;
+const POOL_ID = 5;
 const BUY_FNS = { 1: submitBuyOne, 3: submitBuyThree, 5: submitBuyFive };
 
 // hic et nunc / Teia OBJKTs live on this FA2 contract; link those to Teia,
