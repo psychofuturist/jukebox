@@ -67,12 +67,12 @@ export default function Reveal({ open, tokens, stage, error, qty = 1, onClose })
             </div>
             <div style={{
               width: 280, maxWidth: '100%', margin: '0 auto',
-              border: `3px solid ${STROBE[strobe]}`, background: '#000',
+              border: `1px solid ${STROBE[strobe]}`, background: '#000',
               padding: '32px 16px', boxSizing: 'border-box',
             }}>
               <div style={{
                 width: 48, height: 48, margin: '0 auto 20px',
-                border: `4px solid ${STROBE[strobe]}`,
+                border: `1px solid ${STROBE[strobe]}`,
                 borderTopColor: 'transparent', borderRadius: '50%',
                 animation: 'jukeSpin 0.8s linear infinite',
               }} />
