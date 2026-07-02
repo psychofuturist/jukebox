@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import './App.css';
 import { useWallet } from './store/wallet';
 import { GACHA_ADDRESS, submitBuyOne, submitBuyThree, submitBuyFive } from './lib/contract';
@@ -484,6 +484,9 @@ function JukeboxHome() {
             <PixelText text="pay a coin, play a song" scale={1} color="black" className="subtitle top-layer" />
           </div>
           <div className="header-actions">
+            <Link to={`/collect/${POOL_ID}`} className="top-layer" style={{ textDecoration: 'none' }}>
+              <PixelText text="Collected" scale={2} color="black" className="about-link" />
+            </Link>
             <PixelText text="About" scale={2} color="black" className="about-link top-layer" />
             <button
               className="connect-wallet box-border top-layer"
